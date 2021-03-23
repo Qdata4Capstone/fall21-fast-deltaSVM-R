@@ -1,0 +1,5 @@
+CXX_STD = CXX11
+
+PKG_CPPFLAGS = -pthread
+
+OBJECTS = fastsk.o fastsk_kernel.o shared.o utils.o libsvm-code/eval.o libsvm-code/svm.o libsvm-code/svm-predict.o interface.o RcppExports.o
