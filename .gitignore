@@ -54,3 +54,5 @@ dkms.conf
 # R project files
 *.Rproj
 .Rproj.user
+.RData
+.Rhistory
