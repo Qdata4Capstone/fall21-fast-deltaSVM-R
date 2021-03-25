@@ -6,20 +6,46 @@
 using namespace Rcpp;
 
 // compute_kernel
-void compute_kernel();
-RcppExport SEXP _FastGKMSVM_compute_kernel() {
+void compute_kernel(std::string train_file, std::string test_file, std::string out_file, int g, int m, int t, bool approx, double delta, int max_iters, bool skip_variance, std::string dictionary_file);
+RcppExport SEXP _FastGKMSVM_compute_kernel(SEXP train_fileSEXP, SEXP test_fileSEXP, SEXP out_fileSEXP, SEXP gSEXP, SEXP mSEXP, SEXP tSEXP, SEXP approxSEXP, SEXP deltaSEXP, SEXP max_itersSEXP, SEXP skip_varianceSEXP, SEXP dictionary_fileSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    compute_kernel();
+    Rcpp::traits::input_parameter< std::string >::type train_file(train_fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type test_file(test_fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type out_file(out_fileSEXP);
+    Rcpp::traits::input_parameter< int >::type g(gSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< bool >::type approx(approxSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iters(max_itersSEXP);
+    Rcpp::traits::input_parameter< bool >::type skip_variance(skip_varianceSEXP);
+    Rcpp::traits::input_parameter< std::string >::type dictionary_file(dictionary_fileSEXP);
+    compute_kernel(train_file, test_file, out_file, g, m, t, approx, delta, max_iters, skip_variance, dictionary_file);
     return R_NilValue;
 END_RCPP
 }
-// fit
-void fit();
-RcppExport SEXP _FastGKMSVM_fit() {
+// train
+void train(std::string kernel_file, std::string train_file, std::string test_file, std::string out_file, int g, int m, int t, bool approx, double delta, int max_iters, bool skip_variance, double C, double nu, double eps, std::string kernel_type);
+RcppExport SEXP _FastGKMSVM_train(SEXP kernel_fileSEXP, SEXP train_fileSEXP, SEXP test_fileSEXP, SEXP out_fileSEXP, SEXP gSEXP, SEXP mSEXP, SEXP tSEXP, SEXP approxSEXP, SEXP deltaSEXP, SEXP max_itersSEXP, SEXP skip_varianceSEXP, SEXP CSEXP, SEXP nuSEXP, SEXP epsSEXP, SEXP kernel_typeSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    fit();
+    Rcpp::traits::input_parameter< std::string >::type kernel_file(kernel_fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type train_file(train_fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type test_file(test_fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type out_file(out_fileSEXP);
+    Rcpp::traits::input_parameter< int >::type g(gSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< bool >::type approx(approxSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iters(max_itersSEXP);
+    Rcpp::traits::input_parameter< bool >::type skip_variance(skip_varianceSEXP);
+    Rcpp::traits::input_parameter< double >::type C(CSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type kernel_type(kernel_typeSEXP);
+    train(kernel_file, train_file, test_file, out_file, g, m, t, approx, delta, max_iters, skip_variance, C, nu, eps, kernel_type);
     return R_NilValue;
 END_RCPP
 }
@@ -33,11 +59,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// train_and_score
+void train_and_score(std::string train_file, std::string test_file, int g, int m, int t, bool approx, double delta, int max_iters, bool skip_variance, double C, double nu, double eps, std::string kernel_type, std::string dictionary_file, std::string metric);
+RcppExport SEXP _FastGKMSVM_train_and_score(SEXP train_fileSEXP, SEXP test_fileSEXP, SEXP gSEXP, SEXP mSEXP, SEXP tSEXP, SEXP approxSEXP, SEXP deltaSEXP, SEXP max_itersSEXP, SEXP skip_varianceSEXP, SEXP CSEXP, SEXP nuSEXP, SEXP epsSEXP, SEXP kernel_typeSEXP, SEXP dictionary_fileSEXP, SEXP metricSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type train_file(train_fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type test_file(test_fileSEXP);
+    Rcpp::traits::input_parameter< int >::type g(gSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< bool >::type approx(approxSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iters(max_itersSEXP);
+    Rcpp::traits::input_parameter< bool >::type skip_variance(skip_varianceSEXP);
+    Rcpp::traits::input_parameter< double >::type C(CSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type kernel_type(kernel_typeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type dictionary_file(dictionary_fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    train_and_score(train_file, test_file, g, m, t, approx, delta, max_iters, skip_variance, C, nu, eps, kernel_type, dictionary_file, metric);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_FastGKMSVM_compute_kernel", (DL_FUNC) &_FastGKMSVM_compute_kernel, 0},
-    {"_FastGKMSVM_fit", (DL_FUNC) &_FastGKMSVM_fit, 0},
+    {"_FastGKMSVM_compute_kernel", (DL_FUNC) &_FastGKMSVM_compute_kernel, 11},
+    {"_FastGKMSVM_train", (DL_FUNC) &_FastGKMSVM_train, 15},
     {"_FastGKMSVM_score", (DL_FUNC) &_FastGKMSVM_score, 0},
+    {"_FastGKMSVM_train_and_score", (DL_FUNC) &_FastGKMSVM_train_and_score, 15},
     {NULL, NULL, 0}
 };
 

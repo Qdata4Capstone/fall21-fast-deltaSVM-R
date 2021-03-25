@@ -1,5 +1,6 @@
 useDynLib(FastGKMSVM, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 export(compute_kernel)
-export(fit)
+export(train)
 export(score)
+export(train_and_score)
