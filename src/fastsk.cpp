@@ -1,7 +1,7 @@
 #include "fastsk.hpp"
 #include "fastsk_kernel.hpp"
-#include "shared.h"
 #include "utils.hpp"
+#include "shared.h"
 #include "libsvm-code/svm.h"
 
 #include <vector>
@@ -11,6 +11,7 @@
 #include <cstring>
 #include <iostream>
 #include <assert.h>
+#include <map>
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
@@ -27,18 +28,18 @@ FastSK::FastSK(int g, int m, int t, bool approx, double delta, int max_iters, bo
     this->skip_variance = skip_variance;
 }
 
-void FastSK::compute_kernel(const string Xtrain, const string Xtest) {
+void FastSK::compute_kernel(const string train_file, const string test_file) {
     const string dictionary_file = "";
-    this->compute_kernel(Xtrain, Xtest, dictionary_file);
+    this->compute_kernel(train_file, test_file, dictionary_file);
 }
 
-void FastSK::compute_kernel(const string Xtrain, const string Xtest, const string dictionary_file) {
+void FastSK::compute_kernel(const string train_file, const string test_file, const string dictionary_file) {
     // Read in the sequences from the two files and convert them vectors
-    DataReader* data_reader = new DataReader(Xtrain, dictionary_file);
+    DataReader* data_reader = new DataReader(train_file, dictionary_file);
     bool train = true;
 
-    data_reader->read_data(Xtrain, train);
-    data_reader->read_data(Xtest, !train);
+    data_reader->read_data(train_file, train);
+    data_reader->read_data(test_file, !train);
     vector<vector<int> > train_seq = data_reader->train_seq;
     vector<vector<int> > test_seq = data_reader->test_seq;
 
@@ -46,19 +47,13 @@ void FastSK::compute_kernel(const string Xtrain, const string Xtest, const strin
     this->test_labels = data_reader->test_labels.data();
 
     this->compute_kernel(train_seq, test_seq);
-
 }
-
-// void FastSK::compute_kernel(vector<string> Xtrain, vector<string> Xtest) {
-//     // Convert sequences to numerical form (as vectors)
-
-// }
 
 void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xtest) {
     // Given sequences already in numerical form, compute the kernel matrix
     vector<int> lengths;
     int shortest_train = Xtrain[0].size();
-    for (int i = 0; i < Xtrain.size(); i++) {
+    for (unsigned long i = 0; i < Xtrain.size(); i++) {
         int len = Xtrain[i].size();
         if (len < shortest_train) {
             shortest_train = len;
@@ -66,7 +61,7 @@ void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xt
         lengths.push_back(len);
     }
     int shortest_test = Xtest[0].size();
-    for (int i = 0; i < Xtest.size(); i++) {
+    for (unsigned long i = 0; i < Xtest.size(); i++) {
         int len = Xtest[i].size();
         if (len < shortest_test) {
             shortest_test = len;
