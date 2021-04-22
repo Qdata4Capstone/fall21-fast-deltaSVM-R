@@ -46,7 +46,7 @@ fastsk_train_and_score(
 
 \item{nu}{SVM nu parameter. Default is 1.0}
 
-\item{eps}{SVM epsilon parameter. Defult is 1.0}
+\item{eps}{SVM epsilon parameter. Default is 1.0}
 
 \item{kernel_type}{The kernel type to used. Must be one of linear (default), fastsk, or rbf}
 

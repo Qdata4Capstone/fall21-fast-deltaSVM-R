@@ -9,6 +9,7 @@
 #' @param test_file A FASTA file containing testing sequences and their label
 #' @param g The length of the substrings used to compare sequences. Constraints: \code{0 < g < 20}
 #' @param m The maximum number of mismatches when comparing two gmers Constraints: \code{0 <= m < g}
+#' @param kernel_file A filepath to write the kernel. Default is kernel.out
 #' @param t The number of threads to used. Default is 1
 #' @param approx A boolean; if set to true, then the fast approximation algorithm is used to compute the kernel. Default is False
 #' @param delta Default is 0.025
@@ -16,8 +17,8 @@
 #' @param skip_variance Default is False
 #' @param dictionary_file A file containing the alphabet of characters appearing in the sequences. If not provided, the dictionary will be inferred
 #' @export
-fastsk_compute_kernel <- function(train_file, test_file, out_file, g, m, t = 1L, approx = FALSE, delta = 0.025, max_iters = 100L, skip_variance = FALSE, dictionary_file = "") {
-    invisible(.Call(`_FastGKMSVM_fastsk_compute_kernel`, train_file, test_file, out_file, g, m, t, approx, delta, max_iters, skip_variance, dictionary_file))
+fastsk_compute_kernel <- function(train_file, test_file, g, m, kernel_file = "kernel.out", t = 1L, approx = FALSE, delta = 0.025, max_iters = 100L, skip_variance = FALSE, dictionary_file = "") {
+    invisible(.Call(`_FastGKMSVM_fastsk_compute_kernel`, train_file, test_file, g, m, kernel_file, t, approx, delta, max_iters, skip_variance, dictionary_file))
 }
 
 #' FastSK: A Fast and Accurate GKM-SVM
@@ -35,7 +36,7 @@ fastsk_compute_kernel <- function(train_file, test_file, out_file, g, m, t = 1L,
 #' @param skip_variance Default is False
 #' @param C SVM C parameter. Default is 1.0
 #' @param nu SVM nu parameter. Default is 1.0
-#' @param eps SVM epsilon parameter. Defult is 1.0
+#' @param eps SVM epsilon parameter. Default is 1.0
 #' @param kernel_type The kernel type to used. Must be one of linear (default), fastsk, or rbf
 #' @param dictionary_file A file containing the alphabet of characters appearing in the sequences. If not provided, the dictionary will be inferred
 #' @param metric The metric to score the test sequences with. Must be one of auc (default) or accuracy

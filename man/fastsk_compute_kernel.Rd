@@ -7,9 +7,9 @@
 fastsk_compute_kernel(
   train_file,
   test_file,
-  out_file,
   g,
   m,
+  kernel_file = "kernel.out",
   t = 1L,
   approx = FALSE,
   delta = 0.025,
@@ -26,6 +26,8 @@ fastsk_compute_kernel(
 \item{g}{The length of the substrings used to compare sequences. Constraints: \code{0 < g < 20}}
 
 \item{m}{The maximum number of mismatches when comparing two gmers Constraints: \code{0 <= m < g}}
+
+\item{kernel_file}{A filepath to write the kernel. Default is kernel.out}
 
 \item{t}{The number of threads to used. Default is 1}
 

@@ -6,22 +6,22 @@
 using namespace Rcpp;
 
 // fastsk_compute_kernel
-void fastsk_compute_kernel(std::string train_file, std::string test_file, std::string out_file, int g, int m, int t, bool approx, double delta, int max_iters, bool skip_variance, std::string dictionary_file);
-RcppExport SEXP _FastGKMSVM_fastsk_compute_kernel(SEXP train_fileSEXP, SEXP test_fileSEXP, SEXP out_fileSEXP, SEXP gSEXP, SEXP mSEXP, SEXP tSEXP, SEXP approxSEXP, SEXP deltaSEXP, SEXP max_itersSEXP, SEXP skip_varianceSEXP, SEXP dictionary_fileSEXP) {
+void fastsk_compute_kernel(std::string train_file, std::string test_file, int g, int m, std::string kernel_file, int t, bool approx, double delta, int max_iters, bool skip_variance, std::string dictionary_file);
+RcppExport SEXP _FastGKMSVM_fastsk_compute_kernel(SEXP train_fileSEXP, SEXP test_fileSEXP, SEXP gSEXP, SEXP mSEXP, SEXP kernel_fileSEXP, SEXP tSEXP, SEXP approxSEXP, SEXP deltaSEXP, SEXP max_itersSEXP, SEXP skip_varianceSEXP, SEXP dictionary_fileSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type train_file(train_fileSEXP);
     Rcpp::traits::input_parameter< std::string >::type test_file(test_fileSEXP);
-    Rcpp::traits::input_parameter< std::string >::type out_file(out_fileSEXP);
     Rcpp::traits::input_parameter< int >::type g(gSEXP);
     Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< std::string >::type kernel_file(kernel_fileSEXP);
     Rcpp::traits::input_parameter< int >::type t(tSEXP);
     Rcpp::traits::input_parameter< bool >::type approx(approxSEXP);
     Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< int >::type max_iters(max_itersSEXP);
     Rcpp::traits::input_parameter< bool >::type skip_variance(skip_varianceSEXP);
     Rcpp::traits::input_parameter< std::string >::type dictionary_file(dictionary_fileSEXP);
-    fastsk_compute_kernel(train_file, test_file, out_file, g, m, t, approx, delta, max_iters, skip_variance, dictionary_file);
+    fastsk_compute_kernel(train_file, test_file, g, m, kernel_file, t, approx, delta, max_iters, skip_variance, dictionary_file);
     return R_NilValue;
 END_RCPP
 }
