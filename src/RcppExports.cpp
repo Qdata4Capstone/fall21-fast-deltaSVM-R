@@ -26,8 +26,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // fastsk_train_and_score
-void fastsk_train_and_score(std::string train_file, std::string test_file, int g, int m, int t, bool approx, double delta, int max_iters, bool skip_variance, double C, double nu, double eps, std::string kernel_type, std::string dictionary_file, std::string metric);
-RcppExport SEXP _FastGKMSVM_fastsk_train_and_score(SEXP train_fileSEXP, SEXP test_fileSEXP, SEXP gSEXP, SEXP mSEXP, SEXP tSEXP, SEXP approxSEXP, SEXP deltaSEXP, SEXP max_itersSEXP, SEXP skip_varianceSEXP, SEXP CSEXP, SEXP nuSEXP, SEXP epsSEXP, SEXP kernel_typeSEXP, SEXP dictionary_fileSEXP, SEXP metricSEXP) {
+void fastsk_train_and_score(std::string train_file, std::string test_file, int g, int m, int t, bool approx, double delta, int max_iters, bool skip_variance, double C, double nu, double eps, std::string kernel_type, std::string dictionary_file, std::string metric, std::string metric_file);
+RcppExport SEXP _FastGKMSVM_fastsk_train_and_score(SEXP train_fileSEXP, SEXP test_fileSEXP, SEXP gSEXP, SEXP mSEXP, SEXP tSEXP, SEXP approxSEXP, SEXP deltaSEXP, SEXP max_itersSEXP, SEXP skip_varianceSEXP, SEXP CSEXP, SEXP nuSEXP, SEXP epsSEXP, SEXP kernel_typeSEXP, SEXP dictionary_fileSEXP, SEXP metricSEXP, SEXP metric_fileSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type train_file(train_fileSEXP);
@@ -45,14 +45,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type kernel_type(kernel_typeSEXP);
     Rcpp::traits::input_parameter< std::string >::type dictionary_file(dictionary_fileSEXP);
     Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
-    fastsk_train_and_score(train_file, test_file, g, m, t, approx, delta, max_iters, skip_variance, C, nu, eps, kernel_type, dictionary_file, metric);
+    Rcpp::traits::input_parameter< std::string >::type metric_file(metric_fileSEXP);
+    fastsk_train_and_score(train_file, test_file, g, m, t, approx, delta, max_iters, skip_variance, C, nu, eps, kernel_type, dictionary_file, metric, metric_file);
     return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_FastGKMSVM_fastsk_compute_kernel", (DL_FUNC) &_FastGKMSVM_fastsk_compute_kernel, 11},
-    {"_FastGKMSVM_fastsk_train_and_score", (DL_FUNC) &_FastGKMSVM_fastsk_train_and_score, 15},
+    {"_FastGKMSVM_fastsk_train_and_score", (DL_FUNC) &_FastGKMSVM_fastsk_train_and_score, 16},
     {NULL, NULL, 0}
 };
 

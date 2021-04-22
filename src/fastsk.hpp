@@ -18,7 +18,7 @@ class FastSK {
     int num_mutex = -1;
     int svm_type = C_SVC;
     int kernel_type = LINEAR;       // must be LINEAR, FASTSK, or RBF
-    string kernel_type_name;   
+    string kernel_type_name;
     double C;                       //C param
     double nu;                      //nu for nu-SVC
     double cache_size = 100;        // cache size
@@ -62,7 +62,7 @@ public:
     void fit(double, double, double, const string);
     svm_model* train_model(double *, int *, svm_parameter *);
     svm_problem* create_svm_problem(double *, int *, svm_parameter *);
-    double score(const string);
+    double score(const string, const string);
 };
 
 #endif

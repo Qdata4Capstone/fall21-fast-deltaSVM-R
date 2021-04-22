@@ -5,7 +5,7 @@ fastsk_compute_kernel <- function(train_file, test_file, out_file, g, m, t = 1L,
     invisible(.Call(`_FastGKMSVM_fastsk_compute_kernel`, train_file, test_file, out_file, g, m, t, approx, delta, max_iters, skip_variance, dictionary_file))
 }
 
-fastsk_train_and_score <- function(train_file, test_file, g, m, t = 1L, approx = FALSE, delta = 0.025, max_iters = 100L, skip_variance = FALSE, C = 1.0, nu = 1.0, eps = 1.0, kernel_type = "linear", dictionary_file = "", metric = "auc") {
-    invisible(.Call(`_FastGKMSVM_fastsk_train_and_score`, train_file, test_file, g, m, t, approx, delta, max_iters, skip_variance, C, nu, eps, kernel_type, dictionary_file, metric))
+fastsk_train_and_score <- function(train_file, test_file, g, m, t = 1L, approx = FALSE, delta = 0.025, max_iters = 100L, skip_variance = FALSE, C = 1.0, nu = 1.0, eps = 1.0, kernel_type = "linear", dictionary_file = "", metric = "auc", metric_file = "auc_file.txt") {
+    invisible(.Call(`_FastGKMSVM_fastsk_train_and_score`, train_file, test_file, g, m, t, approx, delta, max_iters, skip_variance, C, nu, eps, kernel_type, dictionary_file, metric, metric_file))
 }
 

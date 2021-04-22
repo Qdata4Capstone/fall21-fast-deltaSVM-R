@@ -437,7 +437,7 @@ svm_problem* FastSK::create_svm_problem(double* K, int* labels, svm_parameter* s
     return prob;
 }
 
-double FastSK::score(const string metric) {
+double FastSK::score(const string metric, const string outfile="auc_file.txt") {
     if (metric != "accuracy" && metric != "auc") {
         throw std::invalid_argument("metric argument must be 'accuracy' or 'auc'");
     }
@@ -467,7 +467,7 @@ double FastSK::score(const string metric) {
     }
 
     FILE *auc_file;
-    auc_file = fopen("auc_file.txt", "w+");
+    auc_file = fopen(outfile.c_str(), "w+");
 
     int svcount = 0;
     for (int i = 0; i < n_str_test; i++) {
