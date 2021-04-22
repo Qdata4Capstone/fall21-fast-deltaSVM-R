@@ -9,9 +9,9 @@
 #include <set>
 #include <math.h>
 #include <cstring>
-#include <iostream>
 #include <assert.h>
 #include <map>
+#include <Rcpp.h>
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
@@ -69,8 +69,8 @@ void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xt
         lengths.push_back(len);
     }
 
-    cout << "Length of shortest train sequence: " << shortest_train << endl;
-    cout << "Length of shortest test sequence: " << shortest_test << endl;
+    Rcpp::Rcout << "Length of shortest train sequence: " << shortest_train << endl;
+    Rcpp::Rcout << "Length of shortest test sequence: " << shortest_test << endl;
 
     if (this->g > shortest_train) {
         g_greater_than_shortest_train(this->g, shortest_train);
@@ -78,7 +78,7 @@ void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xt
     if (this->g > shortest_test) {
         g_greater_than_shortest_test(this->g, shortest_test);
     }
-    
+
     long int n_str_train = Xtrain.size();
     long int n_str_test = Xtest.size();
     long int total_str = n_str_train + n_str_test;
@@ -104,14 +104,14 @@ void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xt
         }
     }
     int dict_size = dict.size();
-    cout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
-    
+    Rcpp::Rcout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
+
     /*Extract g-mers*/
     Features* features = extractFeatures(S, lengths, total_str, g);
     int nfeat = (*features).n;
     int *feat = (*features).features;
     if (!this->quiet) {
-        printf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
+        Rprintf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
     }
 
     kernel_params params;
@@ -153,7 +153,7 @@ void FastSK::compute_train(vector<vector<int> > Xtrain) {
     if (this->g > shortest_train) {
         g_greater_than_shortest_train(this->g, shortest_train);
     }
-    
+
     long int n_str_train = Xtrain.size();
     long int n_str_test = 0;
     long int total_str = n_str_train + n_str_test;
@@ -173,14 +173,14 @@ void FastSK::compute_train(vector<vector<int> > Xtrain) {
     }
 
     int dict_size = dict.size();
-    cout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
-    
+    Rcpp::Rcout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
+
     /*Extract g-mers*/
     Features* features = extractFeatures(S, lengths, total_str, g);
     int nfeat = (*features).n;
     int *feat = (*features).features;
     if (!this->quiet) {
-        printf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
+        Rprintf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
     }
 
     kernel_params params;
@@ -246,7 +246,7 @@ void FastSK::save_kernel(string kernel_file) {
     double *K = this->K;
     int total_str = this->n_str_train + this->n_str_test;
     if (!kernel_file.empty()) {
-        printf("Writing kernel to %s...\n", kernel_file.c_str());
+        Rprintf("Writing kernel to %s...\n", kernel_file.c_str());
         FILE *kernelfile = fopen(kernel_file.c_str(), "w");
         for (int i = 0; i < total_str; ++i) {
             for (int j = 0; j < total_str; ++j) {
@@ -277,7 +277,7 @@ void FastSK::fit(double C, double nu, double eps, const string kernel_type) {
         this->kernel_type = RBF;
         this->kernel_type_name = "rbf";
     } else {
-        printf("Error: kernel must be: 'linear', 'fastsk', or 'rbf'\n");
+        Rprintf("Error: kernel must be: 'linear', 'fastsk', or 'rbf'\n");
         exit(1);
     }
 
@@ -305,7 +305,7 @@ void FastSK::fit(double C, double nu, double eps, const string kernel_type) {
 
     svm_problem *prob;
     struct svm_model *model;
-    
+
     prob = this->create_svm_problem(this->K, this->train_labels, svm_param);
     model = this->train_model(this->K, this->train_labels, svm_param);
 
@@ -328,7 +328,7 @@ svm_model* FastSK::train_model(double *K, int *labels, svm_parameter *svm_param)
         for (int i = 0; i < n_str_train; i++) {
             x[i] = &x_space[totalind];
             for (int j = 0; j < n_str_train; j++) {
-                x_space[j + i * (n_str_train + 1)].index = j + 1; 
+                x_space[j + i * (n_str_train + 1)].index = j + 1;
                 x_space[j + i * (n_str_train + 1)].value = tri_access(K, i, j);
             }
             totalind += n_str_train;
@@ -343,7 +343,7 @@ svm_model* FastSK::train_model(double *K, int *labels, svm_parameter *svm_param)
         for (int i = 0; i < n_str_train; i++) {
             x[i] = &x_space[totalind];
             for (int j = 0; j < n_str_train; j++) {
-                x_space[j + i * (n_str_train + 1)].index = j + 1; 
+                x_space[j + i * (n_str_train + 1)].index = j + 1;
                 x_space[j + i * (n_str_train + 1)].value = tri_access(K, i, j);
             }
             totalind += n_str_train;
@@ -364,7 +364,7 @@ svm_model* FastSK::train_model(double *K, int *labels, svm_parameter *svm_param)
     error_msg = svm_check_parameter(prob, svm_param);
 
     if (error_msg) {
-        fprintf(stderr, "ERROR: %s\n", error_msg);
+        Rcpp::Rcerr << "ERROR: " << error_msg << std::endl;
         exit(1);
     }
 
@@ -387,14 +387,14 @@ svm_problem* FastSK::create_svm_problem(double* K, int* labels, svm_parameter* s
     prob->l = n_str_train;
     prob->y = Malloc(double, prob->l);
     x = Malloc(svm_node*, prob->l);
-    
+
     if (svm_param->kernel_type == FASTSK) {
         x_space = Malloc(struct svm_node, (n_str_train + 1) * n_str_train);
         int totalind = 0;
         for (int i = 0; i < n_str_train; i++) {
             x[i] = &x_space[totalind];
             for (int j = 0; j < n_str_train; j++) {
-                x_space[j + i * (n_str_train + 1)].index = j + 1; 
+                x_space[j + i * (n_str_train + 1)].index = j + 1;
                 x_space[j + i * (n_str_train + 1)].value = tri_access(K, i, j);
             }
             totalind += n_str_train;
@@ -410,7 +410,7 @@ svm_problem* FastSK::create_svm_problem(double* K, int* labels, svm_parameter* s
             x[i] = &x_space[totalind];
             // seems like tri_access on K is causing the segfault
             for (int j = 0; j < n_str_train; j++) {
-                x_space[j + i * (n_str_train + 1)].index = j + 1; 
+                x_space[j + i * (n_str_train + 1)].index = j + 1;
                 x_space[j + i * (n_str_train + 1)].value = tri_access(K, i, j);
             }
             totalind += n_str_train;
@@ -430,7 +430,7 @@ svm_problem* FastSK::create_svm_problem(double* K, int* labels, svm_parameter* s
     error_msg = svm_check_parameter(prob, svm_param);
 
     if (error_msg) {
-        fprintf(stderr, "ERROR: %s\n", error_msg);
+        Rcpp::Rcerr << "ERROR: " << error_msg << std::endl;
         exit(1);
     }
 
@@ -444,13 +444,13 @@ double FastSK::score(const string metric) {
     int n_str = this->total_str;
     int n_str_train = this->n_str_train;
     int n_str_test = this->n_str_test;
-    printf("Predicting labels for %d sequences...\n", n_str_test);
+    Rprintf("Predicting labels for %d sequences...\n", n_str_test);
     double *test_K = construct_test_kernel(n_str_train, n_str_test, this->K);
     int *test_labels = this->test_labels;
-    printf("Test kernel constructed...\n");
+    Rprintf("Test kernel constructed...\n");
 
     int num_sv = this->model->nSV[0] + this->model->nSV[1];
-    printf("num_sv = %d\n", num_sv);
+    Rprintf("num_sv = %d\n", num_sv);
     struct svm_node *x = Malloc(struct svm_node, n_str_train + 1);
     int correct = 0;
     // aggregators for finding num of pos and neg samples for auc
@@ -524,7 +524,7 @@ double FastSK::score(const string metric) {
     fclose(auc_file);
 
     if (pagg == 0 && metric == "auc") {
-        printf("No positive examples were in the test set. AUROC is undefined in this case.\n");
+        Rprintf("No positive examples were in the test set. AUROC is undefined in this case.\n");
     }
 
     double tpr = tp / (double) pagg;
@@ -534,20 +534,20 @@ double FastSK::score(const string metric) {
     double auc = calculate_auc(pos, neg, pagg, nagg);
     double acc = 100 * correct / (double)  n_str_test;
     if (!this->quiet) {
-        printf("Num sequences: %d\n", nagg + pagg);
-        printf("Num positive: %d, Num negative: %d\n", pagg, nagg);
-        printf("TPR: %f\n", tpr);
-        printf("TNR: %f\n", tnr);
-        printf("FNR: %f\n", fnr);
-        printf("FPR: %f\n", fpr);
+        Rprintf("Num sequences: %d\n", nagg + pagg);
+        Rprintf("Num positive: %d, Num negative: %d\n", pagg, nagg);
+        Rprintf("TPR: %f\n", tpr);
+        Rprintf("TNR: %f\n", tnr);
+        Rprintf("FNR: %f\n", fnr);
+        Rprintf("FPR: %f\n", fpr);
     }
-    printf("\nAccuracy: %f\n", acc);
-    printf("AUROC: %f\n", auc);
+    Rprintf("\nAccuracy: %f\n", acc);
+    Rprintf("AUROC: %f\n", auc);
 
     if (metric == "auc") {
         return auc;
     }
-    
+
     return acc;
 }
 

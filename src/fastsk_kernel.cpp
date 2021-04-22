@@ -11,13 +11,13 @@
 #include <ctime>
 #include <cmath>
 #include <string>
-#include <iostream>
 #include <fstream>
+#include <Rcpp.h>
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 KernelFunction::KernelFunction(kernel_params* params) {
-    std::cout << "Initializing kernel function" << std::endl;
+    Rcpp::Rcout << "Initializing kernel function" << std::endl;
     this->params = params;
 }
 
@@ -27,7 +27,7 @@ double* KernelFunction::compute_kernel() {
     /* Build work queue - represents the partial kernel computations
     that need to be completed by the threads */
     int numCombinations = nchoosek(params->g, params->m);
-    
+
     std::vector<int> indexes(numCombinations);
     for (int i = 0; i < numCombinations; i++) {
         indexes[i] = i;
@@ -62,7 +62,7 @@ double* KernelFunction::compute_kernel() {
 
     /* Create an array of mutex locks */
     int num_mutex = params->num_mutex;
-    num_mutex = (num_mutex == -1 || num_mutex > num_threads) ? num_threads : num_mutex; 
+    num_mutex = (num_mutex == -1 || num_mutex > num_threads) ? num_threads : num_mutex;
     pthread_mutex_t *mutexes = (pthread_mutex_t*) malloc(num_mutex * sizeof(pthread_mutex_t));
     for (int i = 0; i < num_mutex; i++) {
         pthread_mutex_init(&mutexes[i], NULL);
@@ -76,13 +76,13 @@ double* KernelFunction::compute_kernel() {
     //     params->approx = false;
     // }
     if (params->approx) {
-        printf("Computing approximate kernel...\n");
+        Rprintf("Computing approximate kernel...\n");
     } else {
-        printf("Computing exact kernel...\n");
+        Rprintf("Computing exact kernel...\n");
     }
 
     /* Multithreaded kernel construction */
-    if (!params->quiet) printf("Computing %d mismatch profiles using %d threads...\n", numCombinations, num_threads);
+    if (!params->quiet) Rprintf("Computing %d mismatch profiles using %d threads...\n", numCombinations, num_threads);
     std::vector<std::thread> threads;
     for (int tid = 0; tid < num_threads; tid++) {
         threads.push_back(std::thread(&KernelFunction::kernel_build_parallel, this, tid, workQueue, queueSize, mutexes, params, K));
@@ -112,11 +112,11 @@ double KernelFunction::get_variance(unsigned int *Ks, double *K_hat, double *var
     double delta;
     double delta2;
     double product;
-    
+
     for (int i = 0; i < n_str_pairs; i++) {
         delta = Ks[i] - K_hat[i];
         K_hat[i] += delta / iter;
-        
+
         if (i < n_train_pairs) {
             delta2 = Ks[i] - K_hat[i];
             product = delta * delta2;
@@ -174,7 +174,7 @@ void KernelFunction::kernel_build_parallel(int tid, WorkItem *workQueue, int que
 
     unsigned int* Ks = (unsigned int*) malloc(sizeof(unsigned int) * n_str_pairs);
     memset(Ks, 0, sizeof(unsigned int) * n_str_pairs);
-    
+
     double* K_hat;
     double* variances;
 
@@ -208,7 +208,7 @@ void KernelFunction::kernel_build_parallel(int tid, WorkItem *workQueue, int que
         unsigned int *group_srt = (unsigned int *) malloc(nfeat * sizeof(unsigned int));
         unsigned int *cnt_comb = (unsigned int *) malloc(2 * sizeof(unsigned int)); //
         // sorted features once mismatch positions are removed
-        unsigned int *feat1 = (unsigned int *) malloc(nfeat * g * sizeof(unsigned int)); 
+        unsigned int *feat1 = (unsigned int *) malloc(nfeat * g * sizeof(unsigned int));
 
         int *pos = (int *) malloc(nfeat * sizeof(int));
         memset(pos, 0, sizeof(int) * nfeat);
@@ -249,14 +249,14 @@ void KernelFunction::kernel_build_parallel(int tid, WorkItem *workQueue, int que
                     this->stdevs.push_back(sd);
                 }
                 if (delta / sd > 1.96) {
-                    printf("thread %d converged in %d iterations...\n", tid, iter);
+                    Rprintf("thread %d converged in %d iterations...\n", tid, iter);
                     working = false;
                 }
             }
         }
         if (approx) {
             if (max_iters != -1 && iter >= max_iters) {
-                printf("thread %d reached max iterations...\n", tid);
+                Rprintf("thread %d reached max iterations...\n", tid);
                 working = false;
             }
         }
@@ -280,7 +280,7 @@ void KernelFunction::kernel_build_parallel(int tid, WorkItem *workQueue, int que
         iter++;
     }
 
-    printf("Thread %d finished in %d iterations...\n", tid, iter - 1);
+    Rprintf("Thread %d finished in %d iterations...\n", tid, iter - 1);
 
     // set up the mutexes to lock as you go through the matrix
     int cusps[num_mutex];
@@ -326,7 +326,7 @@ double *construct_test_kernel(int n_str_train, int n_str_test, double *K) {
     int total_str = n_str_train + n_str_test;
     for (int i = n_str_train; i < total_str; i++){
         for (int j = 0; j < n_str_train; j++){
-            test_K[(i - n_str_train) * n_str_train + j] 
+            test_K[(i - n_str_train) * n_str_train + j]
                 = tri_access(K, i, j) / sqrt(tri_access(K, i, i) * tri_access(K, j, j));
         }
     }
