@@ -33,11 +33,13 @@ fastsk_compute_kernel(
 
 \item{approx}{A boolean; if set to true, then the fast approximation algorithm is used to compute the kernel. Default is False}
 
-\item{delta}{Default is 0.025}
+\item{delta}{A numerical constant for early stopping of kernel calculation. If skip_variance is False,
+the kernel calculation will terminate when \code{delta / stdv > 1.96}. Default is 0.025}
 
 \item{max_iters}{The maximum number of iterations to run. Default is 100}
 
-\item{skip_variance}{Default is False}
+\item{skip_variance}{A boolean flag; if set to true, skip kernel standard deviation calculations and run until
+max_iters is reached. Default is False}
 
 \item{dictionary_file}{A file containing the alphabet of characters appearing in the sequences. If not provided, the dictionary will be inferred}
 }

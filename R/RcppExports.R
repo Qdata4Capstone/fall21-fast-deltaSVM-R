@@ -12,9 +12,11 @@
 #' @param kernel_file A filepath to write the kernel. Default is kernel.out
 #' @param t The number of threads to used. Default is 1
 #' @param approx A boolean; if set to true, then the fast approximation algorithm is used to compute the kernel. Default is False
-#' @param delta Default is 0.025
+#' @param delta A numerical constant for early stopping of kernel calculation. If skip_variance is False,
+#'                 the kernel calculation will terminate when \code{delta / stdv > 1.96}. Default is 0.025
 #' @param max_iters The maximum number of iterations to run. Default is 100
-#' @param skip_variance Default is False
+#' @param skip_variance A boolean flag; if set to true, skip kernel standard deviation calculations and run until
+#'                 max_iters is reached. Default is False
 #' @param dictionary_file A file containing the alphabet of characters appearing in the sequences. If not provided, the dictionary will be inferred
 #' @export
 fastsk_compute_kernel <- function(train_file, test_file, g, m, kernel_file = "kernel.out", t = 1L, approx = FALSE, delta = 0.025, max_iters = 100L, skip_variance = FALSE, dictionary_file = "") {
@@ -31,14 +33,17 @@ fastsk_compute_kernel <- function(train_file, test_file, g, m, kernel_file = "ke
 #' @param m The maximum number of mismatches when comparing two gmers Constraints: \code{0 <= m < g}
 #' @param t The number of threads to used. Default is 1
 #' @param approx A boolean; if set to true, then the fast approximation algorithm is used to compute the kernel. Default is False
-#' @param delta Default is 0.025
+#' @param delta A numerical constant for early stopping of kernel calculation. If skip_variance is False,
+#'                 the kernel calculation will terminate when \code{delta / stdv > 1.96}. Default is 0.025
 #' @param max_iters The maximum number of iterations to run. Default is 100
-#' @param skip_variance Default is False
+#' @param skip_variance A boolean flag; if set to true, skip kernel standard deviation calculations and run until
+#'                 max_iters is reached. Default is False
 #' @param C SVM C parameter. Default is 1.0
 #' @param nu SVM nu parameter. Default is 1.0
 #' @param eps SVM epsilon parameter. Default is 1.0
 #' @param kernel_type The kernel type to used. Must be one of linear (default), fastsk, or rbf
-#' @param dictionary_file A file containing the alphabet of characters appearing in the sequences. If not provided, the dictionary will be inferred
+#' @param dictionary_file A file containing the alphabet of characters appearing in the sequences.
+#'                 If not provided, the dictionary will be inferred
 #' @param metric The metric to score the test sequences with. Must be one of auc (default) or accuracy
 #' @param metric_file A filepath to write the test sequence predictions. Default is auc_file.txt
 #' @export
