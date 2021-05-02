@@ -1,4 +1,4 @@
-# Fast-gkm-svm
+# fast-deltaSVM
 
 ## Overview
 This repository is the R wrapper for [FastSK](https://github.com/QData/FastSK). FastSK is a fast and accurate gkm-SVM based SVM classifer for sequences. Our implementation provides an improved algorithm for implementing gkm-SVM string kernel calculations.
