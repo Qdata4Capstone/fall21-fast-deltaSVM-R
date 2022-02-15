@@ -51,10 +51,13 @@ class FastSK {
 
 public:
     FastSK(int, int, int, bool, double, int, bool);
+    void compute_kernel(vector<vector<int> >, vector<vector<int> >, int *, int *);
     void compute_kernel(vector<vector<int> >, vector<vector<int> >);
     void compute_kernel(const string, const string, const string);
     void compute_kernel(const string, const string);
     void compute_train(vector<vector<int> > Xtrain);
+    void compute_train(vector<vector<int> > Xtrain, int *);
+    void compute_kernel_batch(vector<vector<int> >, vector<vector<int>>);
     vector<vector<double> > get_train_kernel();
     vector<vector<double> > get_test_kernel();
     vector<double> get_stdevs();
@@ -63,6 +66,9 @@ public:
     svm_model* train_model(double *, int *, svm_parameter *);
     svm_problem* create_svm_problem(double *, int *, svm_parameter *);
     double score(const string, const string);
+    double predict(const string);
+    void batch_score(vector<vector<int> >, vector<vector<int >>, int*, int*, int, double, double, double, const string);
+    void free_kernel();
 };
 
 #endif

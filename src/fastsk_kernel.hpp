@@ -13,6 +13,7 @@ typedef struct kernel_params {
     long int total_str;
     long int n_str_pairs;
     Feature *features;
+    BatchFeature *batch_features;
     int dict_size;
     int num_threads;
     int num_mutex;
@@ -32,7 +33,9 @@ public:
     std::vector<double> stdevs;
     KernelFunction(kernel_params*);
     double* compute_kernel();
+    double* compute_test_kernel();
     void kernel_build_parallel(int, WorkItem*, int, pthread_mutex_t*, kernel_params*, double*);
+    void test_kernel_build_parallel(int, WorkItem*, int, pthread_mutex_t*, kernel_params*, double*);
     double get_variance(unsigned int*, double*, double *, int, int, int);
 };
 

@@ -272,7 +272,6 @@ void countAndUpdateTri(unsigned int *outK, unsigned int *sx, unsigned int *g, in
     long int startInd, endInd, j1;
     unsigned int *curfeat = (unsigned int *)malloc(k*sizeof(unsigned int));
     int *ucnts= (int *)malloc(nStr*sizeof(int));
-    int num_str_pairs = nStr * (nStr+1) / 2;
 
     int *updind = (int *)malloc(nStr*sizeof(int));
     memset(updind, 0, sizeof(int) * nStr);
@@ -342,6 +341,33 @@ unsigned nchoosek(unsigned n, unsigned k) {
         result /= i;
     }
     return result;
+}
+
+std::vector<int> getCombination(unsigned int n, std::vector<int> pos, unsigned int k) {
+    if (k == 0) {
+        std::vector<int> empty;
+        return empty;
+    }
+    else if (pos.size() == k) {
+        return pos;
+    }
+    else {
+        unsigned int i = nchoosek(pos.size() - 1, k - 1);
+        if (n < i) {
+            std::vector<int> slice1 = std::vector<int>(pos.begin(), pos.begin() + 1);
+            std::vector<int> slice2 = std::vector<int>(pos.begin() + 1, pos.end());
+
+            std::vector<int> result = getCombination(n, slice2, k - 1);
+            for (int j : result) {
+                slice1.push_back(j);
+            }
+            return slice1;
+        }
+        else {
+            std::vector<int> slice = std::vector<int>(pos.begin() + 1, pos.end());
+            return getCombination(n - i, slice, k);
+        }
+    }
 }
 
 void getCombinations(unsigned int n, unsigned int k, int *pos, unsigned int depth, unsigned int margin, unsigned int* cnt_comb, unsigned int *out, int num_comb) {

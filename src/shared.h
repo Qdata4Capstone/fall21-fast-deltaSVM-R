@@ -19,6 +19,21 @@ typedef struct Feature {
 	}
 } Features;
 
+typedef struct BatchFeature {
+    std::string *test_features;
+    std::string *train_features;
+    int *test_groups;
+    int *train_groups;
+    int n_train_feat;
+    int n_test_feat;
+    ~BatchFeature() {
+        delete test_features;
+        delete train_features;
+        free(test_groups);
+        free(train_groups);
+    }
+} BatchFeature;
+
 typedef struct Combinations {
 	int n;
 	int k;
@@ -47,6 +62,7 @@ void cntsrtna(unsigned int *out,unsigned int *sx, int k, int r, int na);
 void countAndUpdate(unsigned int *outK, unsigned int *sx, unsigned int *g, int k, int r, int nStr);
 void countAndUpdateTri(unsigned int *outK, unsigned int *sx, unsigned int *g, int k, int r, int nStr);
 unsigned nchoosek(unsigned n, unsigned k);
+std::vector<int> getCombination(unsigned int n, std::vector<int> pos, unsigned int k);
 void getCombinations(unsigned int n, unsigned int k, int *pos, unsigned int depth, unsigned int margin, unsigned int *cnt_comb, unsigned int *out, int num_comb);
 void shuffle(WorkItem *array, size_t n);
 void print_null(const char *s);

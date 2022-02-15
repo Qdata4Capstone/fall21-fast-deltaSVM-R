@@ -11,7 +11,8 @@
 #include <cstring>
 #include <assert.h>
 #include <map>
-#include <Rcpp.h>
+// #include <Rcpp.h>
+#include <iostream>
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
@@ -26,6 +27,10 @@ FastSK::FastSK(int g, int m, int t, bool approx, double delta, int max_iters, bo
     this->delta = delta;
     this->max_iters = max_iters;
     this->skip_variance = skip_variance;
+}
+
+void FastSK::free_kernel() {
+    free(this->K);
 }
 
 void FastSK::compute_kernel(const string train_file, const string test_file) {
@@ -48,6 +53,12 @@ void FastSK::compute_kernel(const string train_file, const string test_file, con
 
     this->compute_kernel(train_seq, test_seq);
 }
+void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xtest, int *train_labels, int *test_labels) {
+    this->train_labels = train_labels;
+    this->test_labels = test_labels;
+
+    this->compute_kernel(Xtrain, Xtest);
+}
 
 void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xtest) {
     // Given sequences already in numerical form, compute the kernel matrix
@@ -69,8 +80,8 @@ void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xt
         lengths.push_back(len);
     }
 
-    Rcpp::Rcout << "Length of shortest train sequence: " << shortest_train << endl;
-    Rcpp::Rcout << "Length of shortest test sequence: " << shortest_test << endl;
+    std::cout << "Length of shortest train sequence: " << shortest_train << endl;
+    std::cout << "Length of shortest test sequence: " << shortest_test << endl;
 
     if (this->g > shortest_train) {
         g_greater_than_shortest_train(this->g, shortest_train);
@@ -104,14 +115,14 @@ void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xt
         }
     }
     int dict_size = dict.size();
-    Rcpp::Rcout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
+    std::cout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
 
     /*Extract g-mers*/
     Features* features = extractFeatures(S, lengths, total_str, g);
     int nfeat = (*features).n;
     int *feat = (*features).features;
     if (!this->quiet) {
-        Rprintf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
+        printf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
     }
 
     kernel_params params;
@@ -134,9 +145,15 @@ void FastSK::compute_kernel(vector<vector<int> > Xtrain, vector<vector<int> > Xt
 
     KernelFunction* kernel_function = new KernelFunction(&params);
     double *K = kernel_function->compute_kernel();
+    free(features);
 
     this->K = K;
     this->stdevs = kernel_function->stdevs;
+}
+
+void FastSK::compute_train(vector<vector<int> > Xtrain, int *train_labels) {
+    this->train_labels = train_labels;
+    this->compute_train(Xtrain);
 }
 
 void FastSK::compute_train(vector<vector<int> > Xtrain) {
@@ -173,14 +190,14 @@ void FastSK::compute_train(vector<vector<int> > Xtrain) {
     }
 
     int dict_size = dict.size();
-    Rcpp::Rcout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
+    std::cout << "Dictionary size = " << dict_size << " (+1 for unknown char)." << endl;
 
     /*Extract g-mers*/
     Features* features = extractFeatures(S, lengths, total_str, g);
     int nfeat = (*features).n;
     int *feat = (*features).features;
     if (!this->quiet) {
-        Rprintf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
+        printf("g = %d, k = %d, %d features\n", this->g, this->k, nfeat);
     }
 
     kernel_params params;
@@ -209,9 +226,174 @@ void FastSK::compute_train(vector<vector<int> > Xtrain) {
     this->nfeat = nfeat;
 }
 
+void FastSK::batch_score(vector<vector<int> > Xtrain, vector<vector<int> > Xtest, int* train_labels, int* test_labels, int batch_size, double C, double nu, double eps, const string kernel_type) {
+
+    this->train_labels = train_labels;
+    this->compute_train(Xtrain);
+    this->fit(C, nu, eps, kernel_type);
+
+    this->train_labels = train_labels;
+
+    int i = 0; 
+    while (i < (int) Xtest.size()) {
+        vector<vector<int> > test_batch;
+
+        for (int j = 0; j < min((int) Xtest.size() - i, batch_size); j++) {
+            test_batch.push_back(Xtest[i + j]);
+        }
+        this->test_labels = (test_labels + i);
+        this->compute_kernel_batch(Xtrain, test_batch); 
+        this->predict("auc");
+
+        i += batch_size;
+    }
+    
+}
+
+void FastSK::compute_kernel_batch(vector<vector<int> > Xtrain, vector<vector<int>> Xbatch) {
+
+    vector<int> sv_lengths;
+    vector<int> test_lengths;
+
+    int shortest_train = Xtrain[0].size();
+    for (unsigned long i = 0; i < Xtrain.size(); i++) {
+        int len = Xtrain[i].size();
+        if (len < shortest_train) {
+            shortest_train = len;
+        }
+        sv_lengths.push_back(len);
+    }
+    int shortest_test = Xbatch[0].size();
+    for (unsigned long i = 0; i < Xbatch.size(); i++) {
+        int len = Xbatch[i].size();
+        if (len < shortest_test) {
+            shortest_test = len;
+        }
+        test_lengths.push_back(len);
+    }
+
+    cout << "Length of shortest train sequence: " << shortest_train << endl;
+    cout << "Length of shortest test sequence: " << shortest_test << endl;
+
+    if (this->g > shortest_train) {
+        g_greater_than_shortest_train(this->g, shortest_train);
+    }
+    if (this->g > shortest_test) {
+        g_greater_than_shortest_test(this->g, shortest_test);
+    }
+
+    vector<string> train_seqs;
+    for (int i=0; i < (int) Xtrain.size(); i++) {
+        string train_seq;
+        for (int j = 0; j < (int) Xtrain[i].size(); j++) {
+            train_seq.append(to_string(Xtrain[i][j]));
+        }
+        train_seqs.push_back(train_seq);
+    }
+
+    cout << "Done obtaining training sequences\n";
+
+    int n_train_feat = 0;
+    for (int i = 0; i < (int) sv_lengths.size(); i++) {
+        n_train_feat += (sv_lengths[i] >= this->g) ? (sv_lengths[i] - this->g + 1) : 0;
+    }
+
+    cout << "Counted " << n_train_feat << " features\n";
+
+    int *train_groups = (int *) malloc(n_train_feat * sizeof(int));
+    string *train_features = new string[n_train_feat];
+
+    int c = 0;
+    for (int i = 0; i < (int) train_seqs.size(); i++) {
+        for (int j = 0; j < (int) train_seqs[i].size() - this->g + 1; j++) {
+            train_features[c] = train_seqs[i].substr(j, this->g);
+            train_groups[c] = i;
+            c++;
+        }
+    }
+    if (n_train_feat != c) {
+        printf("Something is wrong...\n");
+    } else {
+        printf("Done with train sequences...\n");
+    }
+
+    vector<string> test_sequences;
+    for (int i=0; i < (int) Xbatch.size(); i++) {
+        string sequence;
+        for (int j = 0; j < (int) Xbatch[i].size(); j++) {
+            sequence.append(to_string(Xbatch[i][j]));
+        }
+        test_sequences.push_back(sequence);
+    }
+
+
+    int n_test_feat = 0;
+    for (int i = 0; i < (int) Xbatch.size(); i++) {
+        n_test_feat += (test_lengths[i] >= this->g) ? (test_lengths[i] - this->g + 1) : 0;
+    }
+
+
+    printf("Number of features: %d\n", n_test_feat);
+    int *test_groups = (int *) malloc(n_test_feat * sizeof(int));
+    string *test_features = new string[n_test_feat];
+
+    c = 0;
+    for (int i = 0; i < (int) test_sequences.size(); i++) {
+        for (int j = 0; j < (int) test_sequences[i].size() - this->g + 1; j++) {
+            test_features[c] = test_sequences[i].substr(j, this->g);
+            test_groups[c] = i;
+            c++;
+        }
+    }
+    if (n_test_feat != c) {
+        printf("Something is wrong...\n");
+    } else {
+        printf("Done with test batch sequences...\n");
+    }
+
+    BatchFeature *features = (BatchFeature *) malloc(sizeof(BatchFeature));
+    (*features).test_features = test_features;
+    (*features).test_groups = test_groups;
+    (*features).n_test_feat = n_test_feat;
+    (*features).train_features = train_features;
+    (*features).train_groups = train_groups;
+    (*features).n_train_feat = n_train_feat;
+
+    kernel_params params;
+    params.g = this->g;
+    params.k = this->k;
+    params.m = this->m;
+    params.n_str_train = Xtrain.size();
+    params.n_str_test = Xbatch.size();
+    params.total_str = Xtrain.size() + Xbatch.size();
+    params.n_str_pairs = Xtrain.size() * Xbatch.size();
+    params.batch_features = features;
+    params.dict_size = 0;
+    params.num_threads = this->num_threads;
+    params.num_mutex = this->num_mutex;
+    params.quiet = this->quiet;
+    params.approx = this->approx;
+    params.delta = this->delta;
+    params.max_iters = this->max_iters;
+    params.skip_variance = this->skip_variance;
+
+    this->total_str = params.total_str;
+    this->n_str_train = params.n_str_train;
+    this->n_str_test = params.n_str_test;
+
+    KernelFunction* kernel_function = new KernelFunction(&params);
+    double *K = kernel_function->compute_test_kernel();
+    free(features);
+
+    this->K = K;
+    this->stdevs = kernel_function->stdevs;
+    this->nfeat = n_train_feat + n_test_feat;
+
+}
+
 vector<vector<double> > FastSK::get_train_kernel() {
     double *K = this->K;
-    int n_str_rain = this->n_str_train;
+    int n_str_train = this->n_str_train;
     vector<vector<double> > train_K(n_str_train, vector<double>(n_str_train, 0));
     for (int i = 0; i < n_str_train; i++) {
         for (int j = 0; j < n_str_train; j++) {
@@ -246,7 +428,7 @@ void FastSK::save_kernel(string kernel_file) {
     double *K = this->K;
     int total_str = this->n_str_train + this->n_str_test;
     if (!kernel_file.empty()) {
-        Rprintf("Writing kernel to %s...\n", kernel_file.c_str());
+        printf("Writing kernel to %s...\n", kernel_file.c_str());
         FILE *kernelfile = fopen(kernel_file.c_str(), "w");
         for (int i = 0; i < total_str; ++i) {
             for (int j = 0; j < total_str; ++j) {
@@ -277,7 +459,7 @@ void FastSK::fit(double C, double nu, double eps, const string kernel_type) {
         this->kernel_type = RBF;
         this->kernel_type_name = "rbf";
     } else {
-        Rprintf("Error: kernel must be: 'linear', 'fastsk', or 'rbf'\n");
+        printf("Error: kernel must be: 'linear', 'fastsk', or 'rbf'\n");
         exit(1);
     }
 
@@ -364,7 +546,7 @@ svm_model* FastSK::train_model(double *K, int *labels, svm_parameter *svm_param)
     error_msg = svm_check_parameter(prob, svm_param);
 
     if (error_msg) {
-        Rcpp::Rcerr << "ERROR: " << error_msg << std::endl;
+        std::cerr << "ERROR: " << error_msg << std::endl;
         exit(1);
     }
 
@@ -430,7 +612,7 @@ svm_problem* FastSK::create_svm_problem(double* K, int* labels, svm_parameter* s
     error_msg = svm_check_parameter(prob, svm_param);
 
     if (error_msg) {
-        Rcpp::Rcerr << "ERROR: " << error_msg << std::endl;
+        std::cerr << "ERROR: " << error_msg << std::endl;
         exit(1);
     }
 
@@ -444,13 +626,13 @@ double FastSK::score(const string metric, const string outfile="auc_file.txt") {
     int n_str = this->total_str;
     int n_str_train = this->n_str_train;
     int n_str_test = this->n_str_test;
-    Rprintf("Predicting labels for %d sequences...\n", n_str_test);
+    printf("Predicting labels for %d sequences...\n", n_str_test);
     double *test_K = construct_test_kernel(n_str_train, n_str_test, this->K);
     int *test_labels = this->test_labels;
-    Rprintf("Test kernel constructed...\n");
+    printf("Test kernel constructed...\n");
 
     int num_sv = this->model->nSV[0] + this->model->nSV[1];
-    Rprintf("num_sv = %d\n", num_sv);
+    printf("num_sv = %d\n", num_sv);
     struct svm_node *x = Malloc(struct svm_node, n_str_train + 1);
     int correct = 0;
     // aggregators for finding num of pos and neg samples for auc
@@ -524,7 +706,7 @@ double FastSK::score(const string metric, const string outfile="auc_file.txt") {
     fclose(auc_file);
 
     if (pagg == 0 && metric == "auc") {
-        Rprintf("No positive examples were in the test set. AUROC is undefined in this case.\n");
+        printf("No positive examples were in the test set. AUROC is undefined in this case.\n");
     }
 
     double tpr = tp / (double) pagg;
@@ -534,15 +716,124 @@ double FastSK::score(const string metric, const string outfile="auc_file.txt") {
     double auc = calculate_auc(pos, neg, pagg, nagg);
     double acc = 100 * correct / (double)  n_str_test;
     if (!this->quiet) {
-        Rprintf("Num sequences: %d\n", nagg + pagg);
-        Rprintf("Num positive: %d, Num negative: %d\n", pagg, nagg);
-        Rprintf("TPR: %f\n", tpr);
-        Rprintf("TNR: %f\n", tnr);
-        Rprintf("FNR: %f\n", fnr);
-        Rprintf("FPR: %f\n", fpr);
+        printf("Num sequences: %d\n", nagg + pagg);
+        printf("Num positive: %d, Num negative: %d\n", pagg, nagg);
+        printf("TPR: %f\n", tpr);
+        printf("TNR: %f\n", tnr);
+        printf("FNR: %f\n", fnr);
+        printf("FPR: %f\n", fpr);
     }
-    Rprintf("\nAccuracy: %f\n", acc);
-    Rprintf("AUROC: %f\n", auc);
+    printf("\nAccuracy: %f\n", acc);
+    printf("AUROC: %f\n", auc);
+
+    if (metric == "auc") {
+        return auc;
+    }
+
+    return acc;
+}
+
+double FastSK::predict(const string metric) {
+    int n_str_train = this->n_str_train;
+    int n_str_test = this->n_str_test;
+    printf("Predicting labels for %d sequences...\n", n_str_test);
+    int *test_labels = this->test_labels;
+
+    int num_sv = this->model->nSV[0] + this->model->nSV[1];
+    printf("num_sv = %d\n", num_sv);
+    struct svm_node *x = Malloc(struct svm_node, n_str_train + 1);
+    int correct = 0;
+    // aggregators for finding num of pos and neg samples for auc
+    int pagg = 0, nagg = 0;
+    double* neg = Malloc(double, n_str_test);
+    double* pos = Malloc(double, n_str_test);
+
+    int fp = 0, fn = 0; //counters for false postives and negatives
+    int tp = 0, tn = 0; //counters for true postives and negatives
+    int labelind = 0;
+    for (int i =0; i < 2; i++){
+        if (this->model->label[i] == 1)
+            labelind = i;
+    }
+
+    FILE *auc_file;
+    auc_file = fopen("auc_pred_file.txt", "w+");
+
+    int svcount = 0;
+    for (int i = 0; i < n_str_test; i++) {
+        if (this->kernel_type == FASTSK) {
+            for (int j = 0; j < n_str_train; j++){
+                x[j].index = j + 1;
+                x[j].value = 0;
+            }
+            svcount = 0;
+            for (int j = 0; j < n_str_train; j++) {
+                x[j].value = this->K[i * n_str_train + j];
+                svcount++;
+            }
+
+            x[n_str_train].index = -1;
+        } else if (this->kernel_type == LINEAR || this->kernel_type == RBF) {
+            for (int j = 0; j < n_str_train; j++){
+                x[j].index = j + 1;
+                x[j].value = this->K[i * n_str_train + j];
+            }
+            x[n_str_train].index = -1;
+        }
+
+        // probs = [prob_pos, prob_neg], not [prob_neg, prob_pos]
+        double probs[2];
+        double guess = svm_predict_probability(this->model, x, probs);
+        fprintf(auc_file, "%d,%f\n", test_labels[i], probs[0]);
+
+        if (test_labels[i] > 0) {
+            pos[pagg] = probs[labelind];
+            pagg += 1;
+            if (guess < 0) {
+                fn++;
+            } else {
+                tp++;
+            }
+        } else {
+            neg[nagg] = probs[labelind];
+            nagg += 1;
+            if (guess > 0) {
+                fp++;
+            } else {
+                tn++;
+            }
+        }
+
+        //printf("guess = %f and test_labels[%d] = %d\n", guess, i, test_labels[i]);
+        if ((guess < 0.0 && test_labels[i] < 0) || (guess > 0.0 && test_labels[i] > 0)) {
+            correct++;
+        }
+    }
+
+    fclose(auc_file);
+
+    if (pagg == 0 && metric == "auc") {
+        printf("No positive examples were in the test set. AUROC is undefined in this case.\n");
+    }
+
+    double tpr = tp / (double) pagg;
+    double tnr = tn / (double) nagg;
+    double fnr = fn / (double) pagg;
+    double fpr = fp / (double) nagg;
+    double auc = calculate_auc(pos, neg, pagg, nagg);
+    double acc = 100 * correct / (double)  n_str_test;
+    if (!this->quiet) {
+        printf("Num sequences: %d\n", nagg + pagg);
+        printf("Num positive: %d, Num negative: %d\n", pagg, nagg);
+        printf("TPR: %f\n", tpr);
+        printf("TNR: %f\n", tnr);
+        printf("FNR: %f\n", fnr);
+        printf("FPR: %f\n", fpr);
+    }
+    printf("\nAccuracy: %f\n", acc);
+    printf("AUROC: %f\n", auc);
+
+    free(this->K);
 
     if (metric == "auc") {
         return auc;
