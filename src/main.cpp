@@ -17,6 +17,7 @@ int help() {
     printf("\t C : (optional) SVM C parameter. Default is 1.0\n");
     printf("\t r : (optional) Kernel type. Must be linear (default), fastsk, or rbf\n");
     printf("\t I : (optional) Maximum number of iterations. Default 100. The number of mismatch positions to sample when running the approximation algorithm.\n");
+    printf("\t b : (optional) Batch size for FastSK-batch. The number of testing sequences to use in a batch to compute the kernel and predict.\n");
     printf("NO ARGUMENT FLAGS\n");
     printf("\t a : (optional) Approximation. If set, the fast approximation algorithm will be used to compute the kernel function\n");
     printf("\t q : (optional) Quiet mode. If set, Kernel computation and SVM training info won't be printed.\n");
@@ -43,6 +44,7 @@ int main(int argc, char* argv[]) {
     int t = 20;
     bool approx = false;
     int max_iters = 100;
+    int batch_size = 0;
     double delta = 0.025;
     bool skip_variance = false;
     string kernel_type = "linear";
@@ -53,7 +55,7 @@ int main(int argc, char* argv[]) {
     double eps = 1;
 
     int c;
-    while ((c = getopt(argc, argv, "g:m:t:I:C:r:aq")) != -1) {
+    while ((c = getopt(argc, argv, "g:m:t:I:b:C:r:aq")) != -1) {
         switch (c) {
             case 'g':
                 g = atoi(optarg);
@@ -67,6 +69,8 @@ int main(int argc, char* argv[]) {
             case 'I':
                 t = atoi(optarg);
                 break;
+            case 'b':
+                batch_size = atoi(optarg);
             case 'C':
                 C = atof(optarg);
                 break;
@@ -114,41 +118,45 @@ int main(int argc, char* argv[]) {
         dictionary_file = argv[arg_num++];
     }
 
-
-    int batch_size = 1500;
-    DataReader* data_reader = new DataReader(train_file, dictionary_file);
-    bool train = true;
-
-    data_reader->read_data(train_file, train);
-    data_reader->read_data(test_file, !train);
-    vector<vector<int> > train_seq = data_reader->train_seq;
-    vector<vector<int> > test_seq = data_reader->test_seq;
-    int* train_labels = data_reader->train_labels.data();
-    int* test_labels = data_reader->test_labels.data();
-
     FastSK* fastsk = new FastSK(g, m, t, approx, delta, max_iters, skip_variance);
-    fastsk->compute_train(train_seq, train_labels);
-    fastsk->fit(C, nu, eps, kernel_type);
 
-    int i = 0;
-    while (i < (int) test_seq.size()) {
-        vector<vector<int> > test_batch;
 
-        for (int j = 0; j < min((int) test_seq.size() - i, batch_size); j++) {
-            test_batch.push_back(test_seq[i + j]);
-        }
-        fastsk->compute_kernel(train_seq, test_batch, train_labels, test_labels + i);
-        fastsk->score("auc", "auc.txt");
-        fastsk->free_kernel();
-        i += batch_size;
+    // FastSK //
+    if (batch_size <= 0) {
+        fastsk->compute_kernel(train_file, test_file, dictionary_file);
+        fastsk->fit(C, nu, eps, kernel_type);
+        fastsk->score("auc", "auc_file_one_shot.txt");
+    } 
+    // Batch-based Versions //
+    else {
+        DataReader* data_reader = new DataReader(train_file, dictionary_file);
+        bool train = true;
+
+        data_reader->read_data(train_file, train);
+        data_reader->read_data(test_file, !train);
+        vector<vector<int> > train_seq = data_reader->train_seq;
+        vector<vector<int> > test_seq = data_reader->test_seq;
+        int* train_labels = data_reader->train_labels.data();
+        int* test_labels = data_reader->test_labels.data();
+
+        // FastSK-Batch //
+        fastsk->batch_score(train_seq, test_seq, train_labels, test_labels, batch_size, C, nu, eps, kernel_type);
+
+        // FastSK-Batch-Naive //
+        // fastsk->compute_train(train_seq, train_labels);
+        // fastsk->fit(C, nu, eps, kernel_type);
+
+        // int i = 0;
+        // while (i < (int) test_seq.size()) {
+        //     vector<vector<int> > test_batch;
+
+        //     for (int j = 0; j < min((int) test_seq.size() - i, batch_size); j++) {
+        //         test_batch.push_back(test_seq[i + j]);
+        //     }
+        //     fastsk->compute_kernel(train_seq, test_batch, train_labels, test_labels + i);
+        //     fastsk->score("auc", "auc.txt");
+        //     fastsk->free_kernel();
+        //     i += batch_size;
+        // }
     }
-
-    
-
-    // fastsk->compute_kernel(train_file, test_file, dictionary_file);
-    // fastsk->fit(C, nu, eps, kernel_type);
-    // fastsk->score("auc", "auc_file_one_shot.txt");
-
-    // FastSK *fastsk_batch = new FastSK(g, m, t, approx, delta, max_iters, skip_variance);
-    // fastsk_batch->batch_score(train_seq, test_seq, train_labels, test_labels, batch_size, C, nu, eps, kernel_type);
 }
